@@ -12,8 +12,6 @@ var setPlayers = function setPlayers(p1, p2){
    document.getElementById('matchup').innerHTML = p1.name + " vs. " + p2.name;
    document.getElementById('p1').innerHTML = p1.nick;
    document.getElementById('p2').innerHTML = p2.nick;
-   console.log('set players');
-   console.log(players);
 }
 
 var mark = function mark(t){
@@ -24,8 +22,6 @@ var mark = function mark(t){
    t.setAttribute('class', 'p' + player);
    t.setAttribute('onclick', null);
    t.innerHTML = players[player].nick;
-   console.log('players');
-   console.log(players);
    nextPlayer();
    var winner = findWinner();
    if(winner){
