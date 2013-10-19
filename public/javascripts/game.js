@@ -29,11 +29,10 @@ var nextPlayer = function nextPlayer(){
    setActiveState(inactive, 'inactive');
 }
 
-var setWinner = function setStalemate(p1, p2){
+var setWinner = function setWinner(p1, p2){
    setActiveState(document.getElementById('p1'), p1 ? 'active' : 'inactive');
    setActiveState(document.getElementById('p2'), p2 ? 'active' : 'inactive');
 };
-
 
 var setActiveState = function setActiveState(cell, newState){
    var newClass = cell.getAttribute('class').replace(/\s*(in)?active/g, '') + ' ' + newState;
