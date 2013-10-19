@@ -4,7 +4,7 @@ block content
    script(src='/javascripts/game.js')
 
    div.game
-      h1 Adelaide vs. Elisha
+      h1#matchup= p1.name+ ' vs. ' + p2.name
       table.game
          tr
             td#AA(onclick='mark(this)') &nbsp;
@@ -25,3 +25,6 @@ block content
          tr
             td#p1(class='p1 active') A
             td#p2(class='p2 inactive') E
+
+   if(p1 && p2)
+      script!= "setPlayers(" + JSON.stringify(p1) + ", " + JSON.stringify(p2) + ");"

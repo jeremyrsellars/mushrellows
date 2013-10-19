@@ -1,14 +1,31 @@
-var game = [[0,0,0],[0,0,0],[0,0,0]];
+var board = [[0,0,0],[0,0,0],[0,0,0]];
 var gameOver = false;
-var players = ['&nbsp;', 'A', 'E'];
+var players = [
+   {name:'&nbsp;', nick:'&nbsp;'},
+   {name:'Player 1', nick:'1'},
+   {name:'Player 2', nick:'2'}
+];
+
+var setPlayers = function setPlayers(p1, p2){
+   players[1] = p1;
+   players[2] = p2;
+   document.getElementById('matchup').innerHTML = p1.name + " vs. " + p2.name;
+   document.getElementById('p1').innerHTML = p1.nick;
+   document.getElementById('p2').innerHTML = p2.nick;
+   console.log('set players');
+   console.log(players);
+}
+
 var mark = function mark(t){
    if(gameOver) return;
    var row = t.id.charCodeAt(0) - 65;
    var col = t.id.charCodeAt(1) - 65;
-   game[row][col] = player;
+   board[row][col] = player;
    t.setAttribute('class', 'p' + player);
    t.setAttribute('onclick', null);
-   t.innerHTML = players[player];
+   t.innerHTML = players[player].nick;
+   console.log('players');
+   console.log(players);
    nextPlayer();
    var winner = findWinner();
    if(winner){
@@ -23,10 +40,8 @@ var nextPlayer = function nextPlayer(){
       player = 2;
    else
       player = 1;
-   var active = document.getElementById('p' + player);
-   var inactive = document.getElementById('p' + lastPlayer);
-   setActiveState(active, 'active');
-   setActiveState(inactive, 'inactive');
+   setActiveState(document.getElementById('p' + player), 'active');
+   setActiveState(document.getElementById('p' + lastPlayer), 'inactive');
 }
 
 var setWinner = function setWinner(p1, p2){
@@ -47,7 +62,7 @@ var findWinner = function findWinner(){
 }
 
 var isWinner = function isWinner(player){
-   var on = function(row,col){return player == game[row][col]};
+   var on = function(row,col){return player == board[row][col]};
    return false
       || (on(0,0) && on(0,1) && on(0,2))
       || (on(1,0) && on(1,1) && on(1,2))
@@ -63,7 +78,7 @@ var isWinner = function isWinner(player){
 }
 
 var isFilled = function isWinner(player){
-   var on = function(row,col){return game[row][col]};
+   var on = function(row,col){return board[row][col]};
    return true
       && on(0,0) && on(0,1) && on(0,2)
       && on(1,0) && on(1,1) && on(1,2)
