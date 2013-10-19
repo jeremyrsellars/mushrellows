@@ -1,0 +1,27 @@
+extends layout
+
+block content
+   script(src='/javascripts/game.js')
+
+   div.game
+      h1 Adelaide vs. Elisha
+      table.game
+         tr
+            td#AA(onclick='mark(this)') &nbsp;
+            td#AB(onclick='mark(this)') &nbsp;
+            td#AC(onclick='mark(this)') &nbsp;
+         tr
+            td#BA(onclick='mark(this)') &nbsp;
+            td#BB(onclick='mark(this)') &nbsp;
+            td#BC(onclick='mark(this)') &nbsp;
+         tr
+            td#CA(onclick='mark(this)') &nbsp;
+            td#CB(onclick='mark(this)') &nbsp;
+            td#CC(onclick='mark(this)') &nbsp;
+
+      h3#status Next move
+
+      table.game
+         tr
+            td#p1(class='p1 active') A
+            td#p2(class='p2 inactive') E
