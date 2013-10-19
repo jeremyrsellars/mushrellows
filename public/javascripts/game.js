@@ -30,8 +30,10 @@ var mark = function mark(t){
    var winner = findWinner();
    if(winner){
       gameOver = true;
-      document.getElementById('status').innerHTML = "<a href='/'>Play again!</a>";
       setWinner(winner == 1, winner == 2);
+      var status = winner < 0 ? "Stalemate - your wits seem matched" : players[winner].name + " is the Champion";
+      document.getElementById('status').innerHTML = status;
+      document.getElementById('again').setAttribute('style', '');
    }
 }
 var nextPlayer = function nextPlayer(){

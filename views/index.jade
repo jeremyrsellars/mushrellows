@@ -4,7 +4,7 @@ block content
    script(src='/javascripts/game.js')
 
    div.game
-      h1#matchup= p1.name+ ' vs. ' + p2.name
+      h1#matchup= p1.name + ' vs. ' + p2.name
       table.game
          tr
             td#AA(onclick='mark(this)') &nbsp;
@@ -20,6 +20,10 @@ block content
             td#CC(onclick='mark(this)') &nbsp;
 
       h3#status Next move
+      h3#again(style='display:none')
+         a(href=url) Rematch!
+         br
+         a(href=url.replace(/p1=/i,'p3=').replace(/p2=/i,'p1=').replace(/p3=/i,'p2=')) Switch!
 
       table.game
          tr
