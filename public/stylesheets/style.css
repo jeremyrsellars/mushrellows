@@ -2,7 +2,7 @@ body {
    text-align: center;
    padding: 0px;
    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-   background-image: url('/images/background.png');
+   background-image: url('/tictactoe/images/background.png');
    background-repeat:both;
 }
 
