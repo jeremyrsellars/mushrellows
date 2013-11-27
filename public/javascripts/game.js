@@ -10,8 +10,6 @@ var setPlayers = function setPlayers(p1, p2){
    players[1] = p1;
    players[2] = p2;
    document.getElementById('matchup').innerHTML = p1.name + " vs. " + p2.name;
-   document.getElementById('p1').innerHTML = p1.nick;
-   document.getElementById('p2').innerHTML = p2.nick;
 }
 
 var mark = function mark(t){

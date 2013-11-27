@@ -1,0 +1,21 @@
+extends layout
+
+block content
+   script(src='/tictactoe/javascripts/pixi.dev.js')
+   script(src='/tictactoe/javascripts/game2d.js')
+
+   div.game
+      h1#matchup= p1.name + ' vs. ' + p2.name
+      div#board
+
+      h3#status Next move
+      h3#again(style='display:none')
+         a(href=url) Rematch!
+         br
+         a(href=url.replace(/p1=/i,'p3=').replace(/p2=/i,'p1=').replace(/p3=/i,'p2=')) Switch!
+
+   if(p1 && p2)
+      script!= "setPlayers(" + JSON.stringify(p1) + ", " + JSON.stringify(p2) + ");"
+
+   script!= "initBoard();"
+   script!= "initGame();"

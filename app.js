@@ -26,7 +26,8 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-app.get('/tictactoe', routes.index);
+app.get('/tictactoe/table', routes.index);
+app.get('/tictactoe', routes.game2d);
 app.get('/', function(req,res){return res.redirect(req.url+'tictactoe')});
 
 http.createServer(app).listen(app.get('port'), function(){
