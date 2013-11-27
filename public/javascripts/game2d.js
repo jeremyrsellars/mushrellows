@@ -24,7 +24,26 @@ GameStatus.createStalemate = function(){
    return stalemate;
 };
 
+var Rect;
 
+Rect = (function() {
+  function Rect(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
+
+  Rect.prototype.center = function() {
+    return {
+      x: this.x + this.width / 2,
+      y: this.y + this.height / 2,
+    };
+  };
+
+  return Rect;
+
+})();
 var board = [[0,0,0],[0,0,0],[0,0,0]];
 var gameStatus = new GameStatus();
 var players = [
@@ -45,11 +64,10 @@ var mark = function mark(row,col){
       return;
    board[row][col] = gameStatus.nextPlayer;
    var nextStatus = getGameStatus();
-   console.log(nextStatus);
    if(nextStatus.isWinner || nextStatus.isStalemate){
       var playerName = nextStatus.isWinner ? players[nextStatus.winningPlayerNumber].name : 'neither';
       setWinner(nextStatus.winningPlayerNumber, playerName);
-      var statusMessage = nextStatus.isStalemate ? "Stalemate - your wits seem matched" : players[winningStatus.winningPlayerNumber].name + " is the Champion";
+      var statusMessage = nextStatus.isStalemate ? "Stalemate - your wits seem matched" : players[nextStatus.winningPlayerNumber].name + " is the Champion";
       document.getElementById('status').innerHTML = statusMessage;
       document.getElementById('again').setAttribute('style', '');
    } else{
@@ -116,8 +134,9 @@ var findWinningStatusForPlayer = function findWinningStatusForPlayer(playerNumbe
    winningStatus.isGameOver =  true;
    winningStatus.winningMoves = null;
    for (var i = winningMoves.length - 1; i >= 0; i--) {
-      if(isWinningMove(winningMoves[i])) {
-         winningStatus.winningMoves = winningMoves;
+      var moves = winningMoves[i];
+      if(isWinningMove(moves)) {
+         winningStatus.winningMoves = moves;
          winningStatus.isWinner = true;
          winningStatus.isGameOver = true;
       }
@@ -138,8 +157,6 @@ var initGame = function(){
    gameStatus.nextPlayer = 1;
    initBoard();
 };
-
-var rect = function(x, y, width, height){return {x:x, y:y, width:width, height:height};};
 
 var initBoard = function(){
    // create an new instance of a pixi stage
@@ -191,9 +208,9 @@ var initBoard = function(){
       wideLine(x, 2 * third + y, width);
       var row = function(x, y, height, width){
          return [
-            rect(x + 0 * third, y, third, third),
-            rect(x + 1 * third, y, third, third),
-            rect(x + 2 * third, y, third, third)]
+            new Rect(x + 0 * third, y, third, third),
+            new Rect(x + 1 * third, y, third, third),
+            new Rect(x + 2 * third, y, third, third)]
       };
 
       this.graphics = grid,
@@ -253,6 +270,11 @@ var initBoard = function(){
       };
 
       // player to move
+      if(gameStatus.isGameOver){
+         drawWinningLine(gameStatus.winningPlayerNumber, gameStatus.winningMoves);
+      };
+
+      // player to move
       if(!gameStatus.isGameOver){
          drawPlayerMoniker(gameStatus.nextPlayer, padding + grid.width / 2 - 50, grid.height + padding + padding, 100, 100);
       };
@@ -265,5 +287,15 @@ var initBoard = function(){
    var drawPlayerMoniker = function draw (player, x, y, width, height) {
       marks.beginFill(playerColor[player], 0.5);
       marks.drawCircle(x, y, Math.max(width, height) * .333);
+   }
+   var drawWinningLine = function draw (player, moves) {
+      var getCell = function(move){
+         return grid.cells[move[0]][move[1]];
+      };
+      var cell1 = getCell(moves[0]);
+      var cell3 = getCell(moves[2]);
+      marks.lineStyle(10, playerColor[player], 1);
+      marks.moveTo(cell1.center().x - padding, cell1.center().y - padding);
+      marks.lineTo(cell3.center().x - padding, cell3.center().y - padding);
    }
 };
