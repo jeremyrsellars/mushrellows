@@ -1,5 +1,5 @@
 var board = [[0,0,0],[0,0,0],[0,0,0]];
-var gameOver = false;
+var gameStatus = {isGameOver: false};
 var players = [
    {name:'&nbsp;', nick:'&nbsp;'},
    {name:'Player 1', nick:'1'},
@@ -13,16 +13,17 @@ var setPlayers = function setPlayers(p1, p2){
 }
 
 var mark = function mark(row,col){
-   if(gameOver) return;
+   if(gameStatus.isGameOver) return;
    if(board[row][col] != 0)
       return;
    board[row][col] = player;
    nextPlayer();
-   var winner = findWinner();
-   if(winner){
-      gameOver = true;
-      setWinner(winner, players[winner].name);
-      var status = winner < 0 ? "Stalemate - your wits seem matched" : players[winner].name + " is the Champion";
+   var winningStatus = findWinningStatus();
+   if(winningStatus.isWinner || winningStatus.isStalemate){
+      gameStatus.isGameOver = true;
+      var playerName = winningStatus.isWinner ? players[winningStatus.playerNumber].name : 'neither';
+      setWinner(winningStatus.playerNumber, playerName);
+      var status = winningStatus.isStalemate ? "Stalemate - your wits seem matched" : players[winningStatus.playerNumber].name + " is the Champion";
       document.getElementById('status').innerHTML = status;
       document.getElementById('again').setAttribute('style', '');
    }
@@ -36,7 +37,9 @@ var nextPlayer = function nextPlayer(){
 }
 
 var setWinner = function setWinner(playerNumber, playerName){
-   alert(playerName + ' is the winner!');
+   setTimeout(50, function(){
+      alert(playerName + ' is the winner!');
+   });
 };
 
 var setActiveState = function setActiveState(cell, newState){
@@ -44,30 +47,52 @@ var setActiveState = function setActiveState(cell, newState){
    cell.setAttribute('class', newClass);
 };
 
-var findWinner = function findWinner(){
-   if(isWinner(1)) return 1;
-   if(isWinner(2)) return 2;
-   if(isFilled()) return -1;
-   return 0;
+var findWinningStatus = function findWinningStatus(){
+   var status = findWinningStatusForPlayer(1);
+   if(status.isWinner)
+      return status;
+   status = findWinningStatusForPlayer(2);
+   if(status.isWinner)
+      return status;
+   if(isFilled())
+      return {playerNumber:-1, isWinner:false, isStalemate:true, isGameOver: true, winningMoves:null};
+   return {playerNumber:0, isWinner:false, isStalemate:false, isGameOver: false, winningMoves:null};
 }
 
-var isWinner = function isWinner(player){
-   var on = function(row,col){return player == board[row][col]};
-   return false
-      || (on(0,0) && on(0,1) && on(0,2))
-      || (on(1,0) && on(1,1) && on(1,2))
-      || (on(2,0) && on(2,1) && on(2,2))
+var findWinningStatusForPlayer = function findWinningStatusForPlayer(playerNumber){
+   var on = function(row,col){return board[row][col]};
+   var winningMoves = [
+      [[0,0],[0,1],[0,2]],
+      [[1,0],[1,1],[1,2]],
+      [[2,0],[2,1],[2,2]],
 
-      || (on(0,0) && on(1,0) && on(2,0))
-      || (on(0,1) && on(1,1) && on(2,1))
-      || (on(0,2) && on(1,2) && on(2,2))
+      [[0,0],[1,0],[2,0]],
+      [[0,1],[1,1],[2,1]],
+      [[0,2],[1,2],[2,2]],
 
-      || (on(0,0) && on(1,1) && on(2,2))
-      || (on(2,0) && on(1,1) && on(0,2))
-      ;
+      [[0,0],[1,1],[2,2]],
+      [[2,0],[1,1],[0,2]],
+   ];
+   var isWinningMove = function(coords){
+      var win = true;
+      for (var i = coords.length - 1; i >= 0; i--) {
+         win &= on.apply(null,coords[i]);
+      };
+      return win;
+   };
+   var status = function(row,col){return playerNumber == board[row][col]};
+   var winningStatus = {playerNumber:playerNumber, isWinner:false, isStalemate:false, isGameOver: true, winningMoves:null}
+   for (var i = winningMoves.length - 1; i >= 0; i--) {
+      if(isWinningMove(winningMoves[i])) {
+         winningStatus.winningMoves = winningMoves;
+         winningStatus.isWinner = true;
+         winningStatus.isGameOver = true;
+      }
+   };
+   return winningStatus;
 }
 
-var isFilled = function isWinner(player){
+var isFilled = function isFilled(){
    var on = function(row,col){return board[row][col]};
    return true
       && on(0,0) && on(0,1) && on(0,2)
@@ -206,5 +231,4 @@ var initBoard = function(){
       marks.beginFill(playerColor[player], 0.5);
       marks.drawCircle(x, y, Math.max(width, height) * .333);
    }
-
 };
