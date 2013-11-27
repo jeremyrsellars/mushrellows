@@ -1,7 +1,7 @@
 body {
-   text-align: center;
    padding: 0px;
    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+   text-align: center;
    background-image: url('/tictactoe/images/background.png');
    background-repeat:both;
 }
@@ -11,7 +11,8 @@ div.game{
                                     support rgba */
     background: rgba(255, 255, 255, .5);
     min-height: 300px;
-    min-width: 180px; 
+    min-width: 320px; 
+    max-width: 320px; 
     padding: 10px;
     border: 2px dashed red;
 }
