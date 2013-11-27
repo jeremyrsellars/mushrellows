@@ -1,5 +1,32 @@
+var GameStatus;
+
+GameStatus = (function() {
+  function GameStatus() {
+    ({
+      winningPlayerNumber: 0,
+      isWinner: false,
+      isStalemate: false,
+      isGameOver: false,
+      winningMoves: null,
+      nextPlayer: -1,
+    });
+  }
+
+  return GameStatus;
+
+})();
+
+GameStatus.createStalemate = function(){
+   var stalemate = new GameStatus();
+   stalemate.winningPlayerNumber = -1;
+   stalemate.isStalemate = true;
+   stalemate.isGameOver = true;
+   return stalemate;
+};
+
+
 var board = [[0,0,0],[0,0,0],[0,0,0]];
-var gameStatus = {isGameOver: false};
+var gameStatus = new GameStatus();
 var players = [
    {name:'&nbsp;', nick:'&nbsp;'},
    {name:'Player 1', nick:'1'},
@@ -16,24 +43,25 @@ var mark = function mark(row,col){
    if(gameStatus.isGameOver) return;
    if(board[row][col] != 0)
       return;
-   board[row][col] = player;
-   nextPlayer();
-   var winningStatus = findWinningStatus();
-   if(winningStatus.isWinner || winningStatus.isStalemate){
-      gameStatus.isGameOver = true;
-      var playerName = winningStatus.isWinner ? players[winningStatus.playerNumber].name : 'neither';
-      setWinner(winningStatus.playerNumber, playerName);
-      var status = winningStatus.isStalemate ? "Stalemate - your wits seem matched" : players[winningStatus.playerNumber].name + " is the Champion";
-      document.getElementById('status').innerHTML = status;
+   board[row][col] = gameStatus.nextPlayer;
+   var nextStatus = getGameStatus();
+   console.log(nextStatus);
+   if(nextStatus.isWinner || nextStatus.isStalemate){
+      var playerName = nextStatus.isWinner ? players[nextStatus.winningPlayerNumber].name : 'neither';
+      setWinner(nextStatus.winningPlayerNumber, playerName);
+      var statusMessage = nextStatus.isStalemate ? "Stalemate - your wits seem matched" : players[winningStatus.winningPlayerNumber].name + " is the Champion";
+      document.getElementById('status').innerHTML = statusMessage;
       document.getElementById('again').setAttribute('style', '');
+   } else{
+      nextStatus.nextPlayer = getOtherPlayer(gameStatus.nextPlayer);
    }
+   gameStatus = nextStatus;
 }
-var nextPlayer = function nextPlayer(){
-   var lastPlayer = player;
-   if(player == 1)
-      player = 2;
+var getOtherPlayer = function getOtherPlayer(lastPlayer){
+   if(lastPlayer == 1)
+      return 2;
    else
-      player = 1;
+      return 1;
 }
 
 var setWinner = function setWinner(playerNumber, playerName){
@@ -47,20 +75,20 @@ var setActiveState = function setActiveState(cell, newState){
    cell.setAttribute('class', newClass);
 };
 
-var findWinningStatus = function findWinningStatus(){
+var getGameStatus = function getGameStatus(){
    var status = findWinningStatusForPlayer(1);
    if(status.isWinner)
-      return status;
+      {console.log('player 1 is the winner'); return status;}
    status = findWinningStatusForPlayer(2);
    if(status.isWinner)
-      return status;
+      {console.log('player 2 is the winner'); return status;}
    if(isFilled())
-      return {playerNumber:-1, isWinner:false, isStalemate:true, isGameOver: true, winningMoves:null};
-   return {playerNumber:0, isWinner:false, isStalemate:false, isGameOver: false, winningMoves:null};
+      return GameStatus.createStalemate();
+   return new GameStatus();
 }
 
 var findWinningStatusForPlayer = function findWinningStatusForPlayer(playerNumber){
-   var on = function(row,col){return board[row][col]};
+   var on = function(row,col){return board[row][col] == playerNumber};
    var winningMoves = [
       [[0,0],[0,1],[0,2]],
       [[1,0],[1,1],[1,2]],
@@ -81,7 +109,12 @@ var findWinningStatusForPlayer = function findWinningStatusForPlayer(playerNumbe
       return win;
    };
    var status = function(row,col){return playerNumber == board[row][col]};
-   var winningStatus = {playerNumber:playerNumber, isWinner:false, isStalemate:false, isGameOver: true, winningMoves:null}
+   var winningStatus = new GameStatus();
+   winningStatus.winningPlayerNumber = playerNumber;
+   winningStatus.isWinner = false;
+   winningStatus.isStalemate = false;
+   winningStatus.isGameOver =  true;
+   winningStatus.winningMoves = null;
    for (var i = winningMoves.length - 1; i >= 0; i--) {
       if(isWinningMove(winningMoves[i])) {
          winningStatus.winningMoves = winningMoves;
@@ -101,9 +134,9 @@ var isFilled = function isFilled(){
       ;
 }
 
-var player = 2;
 var initGame = function(){
-   nextPlayer();
+   gameStatus.nextPlayer = 1;
+   initBoard();
 };
 
 var rect = function(x, y, width, height){return {x:x, y:y, width:width, height:height};};
@@ -220,7 +253,9 @@ var initBoard = function(){
       };
 
       // player to move
-      drawPlayerMoniker(player, padding + grid.width / 2 - 50, grid.height + padding + padding, 100, 100);
+      if(!gameStatus.isGameOver){
+         drawPlayerMoniker(gameStatus.nextPlayer, padding + grid.width / 2 - 50, grid.height + padding + padding, 100, 100);
+      };
 
       renderer.render(stage);
       requestAnimFrame(animate);
