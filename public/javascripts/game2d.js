@@ -2,14 +2,13 @@ var GameStatus;
 
 GameStatus = (function() {
   function GameStatus() {
-    ({
-      winningPlayerNumber: 0,
-      isWinner: false,
-      isStalemate: false,
-      isGameOver: false,
-      winningMoves: null,
-      nextPlayer: -1,
-    });
+   this.tick = 1;
+   this.winningPlayerNumber = 0;
+   this.isWinner = false;
+   this.isStalemate = false;
+   this.isGameOver = false;
+   this.winningMoves = null;
+   this.nextPlayer = -1;
   }
 
   return GameStatus;
@@ -70,11 +69,17 @@ var mark = function mark(row,col){
       var statusMessage = nextStatus.isStalemate ? "Stalemate - your wits seem matched" : players[nextStatus.winningPlayerNumber].name + " is the Champion";
       document.getElementById('status').innerHTML = statusMessage;
       document.getElementById('again').setAttribute('style', '');
-   } else{
+   } else {
       nextStatus.nextPlayer = getOtherPlayer(gameStatus.nextPlayer);
    }
-   gameStatus = nextStatus;
+   gameStatus = foldStatus(nextStatus, gameStatus);
 }
+
+var foldStatus = function foldStatus(nextStatus, lastStatus){
+   nextStatus.tick = lastStatus.tick + 1;
+   return nextStatus;
+}
+
 var getOtherPlayer = function getOtherPlayer(lastPlayer){
    if(lastPlayer == 1)
       return 2;
@@ -187,10 +192,7 @@ var initBoard = function(){
       // draw a shape
       var verticalLine = function(x, y, height){
          grid.moveTo(x, y);
-         grid.lineTo(x + thickness, y);
-         grid.lineTo(x + thickness, y + height);
          grid.lineTo(x, y + height);
-         grid.lineTo(x, y);
          grid.endFill();
       }
       verticalLine(x + 1 * third, y, width);
@@ -198,10 +200,7 @@ var initBoard = function(){
 
       var wideLine = function(x, y, width){
          grid.moveTo(x, y);
-         grid.lineTo(x, y + thickness);
-         grid.lineTo(x + width, y + thickness);
          grid.lineTo(x + width, y);
-         grid.lineTo(x, y);
          grid.endFill();
       }
       wideLine(x, 1 * third + y, width);
@@ -235,14 +234,12 @@ var initBoard = function(){
    };
 
    var padding = 40;
-   var grid = new Grid(padding, padding, 300);
+   var grid = new Grid(0, 0, 300);
    gridGraphic = grid.graphics;
    stage.addChild(gridGraphic);
 
    var marks = new PIXI.Graphics();
-   stage.addChild(marks);
-   marks.position.x = 60;
-   marks.position.y = 60;
+   gridGraphic.addChild(marks);
    
    var count = 0;
    
@@ -253,12 +250,12 @@ var initBoard = function(){
       var col = grid.getColFromXY(relPoint.x, relPoint.y);
 
       mark(row,col);
-      requestAnimFrame(animate);
    }
    
    requestAnimFrame(animate);
 
    function animate() {
+      gameStatus = foldStatus(gameStatus, gameStatus);
       marks.clear();
       
       for (var r = board.length - 1; r >= 0; r--) {
@@ -266,36 +263,59 @@ var initBoard = function(){
          for (var c = row.length - 1; c >= 0; c--) {
             var cell = grid.cells[r][c];
             drawPlayerMoniker(row[c], cell.x, cell.y, cell.width, cell.height);
+            //drawCellOutline(r, c);
          };
       };
 
       // player to move
-      if(gameStatus.isGameOver){
+      if(gameStatus.isWinner){
          drawWinningLine(gameStatus.winningPlayerNumber, gameStatus.winningMoves);
       };
 
       // player to move
       if(!gameStatus.isGameOver){
-         drawPlayerMoniker(gameStatus.nextPlayer, padding + grid.width / 2 - 50, grid.height + padding + padding, 100, 100);
+         drawPlayerMoniker(gameStatus.nextPlayer,
+            padding + grid.width / 2 - 50, grid.height + padding + padding, 100, 100,
+            true);
       };
 
       renderer.render(stage);
       requestAnimFrame(animate);
    }
 
-   var playerColor = [0xffffff, 0xffFF00, 0x00ffFF]
-   var drawPlayerMoniker = function draw (player, x, y, width, height) {
-      marks.beginFill(playerColor[player], 0.5);
-      marks.drawCircle(x, y, Math.max(width, height) * .333);
+   var playerColor = [0xffffff, 0xFF0000, 0x000000]
+
+   var drawPlayerMoniker = function drawPlayerMoniker (player, x, y, width, height, isGlowing) {
+      var fillOpacity = 0.5;
+      if(gameStatus.tick % 100 == 0)
+         console.log(gameStatus.tick);
+      if(isGlowing) fillOpacity += .1 * Math.sin(gameStatus.tick / 10);
+      marks.beginFill(playerColor[player], fillOpacity);
+      var radius = Math.max(width, height) * .333;
+      marks.drawCircle(x + width / 2, y + height / 2, radius);
+      marks.lineStyle(5, playerColor[player], 1);
+      marks.drawCircle(x + width / 2, y + height / 2, radius);
+      marks.drawCircle(x + width / 2, y + height / 2, radius * .6666);
    }
-   var drawWinningLine = function draw (player, moves) {
+
+   var drawCellOutline = function drawCellOutline (row, col) {
+      var cell = grid.cells[row][col];
+      marks.lineStyle(1, 0x000000, 1);
+      marks.moveTo(cell.x, cell.y);
+      marks.lineTo(cell.x + cell.width, cell.y);
+      marks.lineTo(cell.x + cell.width, cell.y + cell.height);
+      marks.lineTo(cell.x, cell.y + cell.height);
+      marks.lineTo(cell.x, cell.y);
+   }
+
+   var drawWinningLine = function drawWinningLine (player, moves) {
       var getCell = function(move){
          return grid.cells[move[0]][move[1]];
       };
       var cell1 = getCell(moves[0]);
       var cell3 = getCell(moves[2]);
       marks.lineStyle(10, playerColor[player], 1);
-      marks.moveTo(cell1.center().x - padding, cell1.center().y - padding);
-      marks.lineTo(cell3.center().x - padding, cell3.center().y - padding);
+      marks.moveTo(cell1.center().x, cell1.center().y);
+      marks.lineTo(cell3.center().x, cell3.center().y);
    }
 };
