@@ -223,11 +223,13 @@ var initBoard = function(){
             row(x, y + 2 * third, third, third)];
    }
    Grid.prototype.getRowFromXY = function(x, y){
+      if(isNaN(x) || isNaN(y) || x <= 0 || y <= 0) return -1;
       var row = (y - this.y) / this.width * 3
       row = Math.floor(row);
       return row;
    };
    Grid.prototype.getColFromXY = function(x, y){
+      if(isNaN(x) || isNaN(y) || x <= 0 || y <= 0) return -1;
       var col = (x - this.x) / this.height * 3
       col = Math.floor(col);
       return col;
