@@ -1,20 +1,24 @@
 body {
    padding: 0px;
+   margin: 0px;
    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
    text-align: center;
-   background-image: url('/tictactoe/images/background.png');
    background-repeat:both;
+   background: rgb(0, 0, 80); /* Fall-back for browsers that don't
+                                    support rgba */
+   background: rgba(0, 0, 80, .5);
 }
 
 div.game{
-    background: rgb(255, 255, 255); /* Fall-back for browsers that don't
+    background: rgb(255, 255, 0); /* Fall-back for browsers that don't
                                     support rgba */
-    background: rgba(255, 255, 255, .5);
-    min-height: 300px;
-    min-width: 320px; 
-    max-width: 320px; 
+    background: rgba(255, 255, 0, .5);
     padding: 10px;
-    border: 2px dashed red;
+    border: 2px dashed yellow;
+    z-index: 10;
+    position: absolute;
+    right: 0;
+    bottom: 0;
 }
 
 h3{

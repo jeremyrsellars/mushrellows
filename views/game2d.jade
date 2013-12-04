@@ -4,9 +4,9 @@ block content
    script(src='/tictactoe/javascripts/pixi.dev.js')
    script(src='/tictactoe/javascripts/game2d.js')
 
-   div.game
+   div#board
+   div.game#game
       h1#matchup= p1.name + ' vs. ' + p2.name
-      div#board
 
       h3#status
       h3#again(style='display:none')

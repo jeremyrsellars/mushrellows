@@ -158,18 +158,25 @@ var isFilled = function isFilled(){
 }
 
 var initGame = function(){
-   gameStatus.nextPlayer = 1;
-   initBoard();
+   try{
+      gameStatus.nextPlayer = 1;
+      initBoard();
+   } catch(e) {
+      alert(e);
+   }
+
 };
 
 var initBoard = function(){
    // create an new instance of a pixi stage
-   var stage = new PIXI.Stage(0xFFFFFF, true);
+   var stage = new PIXI.Stage(0x000080, true);
    
    stage.setInteractive(true);
    
-   var renderer = PIXI.autoDetectRenderer(320, 480);
-   
+   var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+
+   renderer.view.style.width = window.innerWidth + "px";
+   renderer.view.style.height = window.innerHeight + "px";
    renderer.view.style.display = "block";
    
    // add render view to DOM
@@ -177,32 +184,37 @@ var initBoard = function(){
    
    var Grid = function Grid(x, y, width){
       var grid = new PIXI.Graphics();
-      
-      grid.beginFill(0xc0c0c0 );
-      grid.lineStyle(10, 0x5555ff, 1);
+      var thickness = 10;
+      var lineOpacity = .4;
+      var lineColor = 0xFFFF00;
+      grid.position.x = x;
+      grid.position.y = y;
+      this.x = x;
+      this.y = y;
+      grid.lineStyle(thickness, lineColor, lineOpacity);
       grid.drawRect(0, 0, width, width);
 
       var third = width / 3;
 
       var drawCrossHatch = function(){
          grid.beginFill(0xFF3300);
-         grid.lineStyle(10, 0x5555ff, 1);
+         grid.lineStyle(thickness, lineColor, lineOpacity);
          
          var verticalLine = function(x, y, height){
             grid.moveTo(x, y);
             grid.lineTo(x, y + height);
             grid.endFill();
          }
-         verticalLine(x + 1 * third, y, width);
-         verticalLine(y + 2 * third, y, width);
+         verticalLine(1 * third, 0, width);
+         verticalLine(2 * third, 0, width);
 
          var horizontalLine = function(x, y, width){
             grid.moveTo(x, y);
             grid.lineTo(x + width, y);
             grid.endFill();
          }
-         horizontalLine(x, 1 * third + y, width);
-         horizontalLine(x, 2 * third + y, width);
+         horizontalLine(0, 1 * third + 0, width);
+         horizontalLine(0, 2 * third + 0, width);
       };
       drawCrossHatch();
       var row = function(x, y, height, width){
@@ -213,37 +225,49 @@ var initBoard = function(){
       };
 
       this.graphics = grid;
-      this.x = x;
-      this.y = y;
+      this.thickness = thickness;
       this.width = width;
       this.height = width;
       this.cells = [
-            row(x, y + 0 * third, third, third),
-            row(x, y + 1 * third, third, third),
-            row(x, y + 2 * third, third, third)];
+            row(0, 0 * third, third, third),
+            row(0, 1 * third, third, third),
+            row(0, 2 * third, third, third)];
    }
    Grid.prototype.getRowFromXY = function(x, y){
       if(isNaN(x) || isNaN(y) || x <= 0 || y <= 0) return -1;
-      var row = (y - this.y) / this.width * 3
+      var row = (y - this.thickness - this.y) / this.width * 3
       row = Math.floor(row);
       return row;
    };
    Grid.prototype.getColFromXY = function(x, y){
       if(isNaN(x) || isNaN(y) || x <= 0 || y <= 0) return -1;
-      var col = (x - this.x) / this.height * 3
+      var col = (x - this.thickness - this.x) / this.height * 3
       col = Math.floor(col);
       return col;
    };
 
    var padding = 40;
-   var grid = new Grid(0, 0, 300);
+   var gridX = 130;
+   var gridY = 100;
+   var gridWidth = 300;
+   if(window.innerWidth < 500){
+      document.getElementById('game').setAttribute('style', 'position:relative');
+      gridX = 0;
+      gridY = 0;
+      gridWidth = Math.min(window.innerWidth, window.innerHeight);
+   }
+   var grid = new Grid(gridX, gridY, gridWidth);
    gridGraphic = grid.graphics;
-   gridGraphic.position.x = 10;
-   gridGraphic.position.y = 10;
+
+   var backgroundUrl = window.location.toString().match(/^https?:\/\/[^\/]+/) + '/tictactoe/images/background_tree.png';
+   stage.addChild(new PIXI.Sprite.fromImage(backgroundUrl));
    stage.addChild(gridGraphic);
 
    var marks = new PIXI.Graphics();
+   marks.position.x = 0;
+   marks.position.y = 0;
    gridGraphic.addChild(marks);
+
 
    var createPlayerLabel = function(playerName){
       var label = new PIXI.Text(playerName);
@@ -261,9 +285,8 @@ var initBoard = function(){
    var outOfBounds = function(n){
       return n < 0 || n > 2;
    };
-   stage.click = stage.tap = function(data)
-   {
-      var relPoint = data.getLocalPosition(gridGraphic);
+   stage.click = stage.tap = function(data){
+      var relPoint = data.getLocalPosition(stage);
       var row = grid.getRowFromXY(relPoint.x, relPoint.y);
       var col = grid.getColFromXY(relPoint.x, relPoint.y);
 
@@ -284,7 +307,8 @@ var initBoard = function(){
             };
          return false;
       };
-      var relPoint = stage.getMousePosition();
+      var stagePoint = stage.getMousePosition();
+      var relPoint = {x: stagePoint.x, y: stagePoint.y}
       var hoveredCell = {
          row: grid.getRowFromXY(relPoint.x, relPoint.y),
          col: grid.getColFromXY(relPoint.x, relPoint.y),
