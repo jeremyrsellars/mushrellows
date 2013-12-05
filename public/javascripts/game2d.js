@@ -23,43 +23,46 @@ GameStatus.createStalemate = function(){
    return stalemate;
 };
 
-var Rect;
+var Cell;
 
-Rect = (function() {
-  function Rect(x, y, width, height) {
+Cell = (function() {
+  function Cell(x, y, width, height) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
   }
 
-  Rect.prototype.center = function() {
+  Cell.prototype.center = function() {
     return {
       x: this.x + this.width / 2,
       y: this.y + this.height / 2,
     };
   };
 
-  return Rect;
+  return Cell;
 })();
 var board = [[0,0,0],[0,0,0],[0,0,0]];
 var gameStatus = new GameStatus();
 var players = [
    {name:'&nbsp;', nick:'&nbsp;'},
-   {name:'Player 1', nick:'1'},
-   {name:'Player 2', nick:'2'},
+   {name:'Player 1', nick:'1', color:'yellow'},
+   {name:'Player 2', nick:'2', color:'white'},
 ];
+var monikerFiles = [null,'star_y.png','star_w.png'];
+var monikerWinnerFiles = [null,'star_y_win.png','star_w_win.png'];
 
 var setPlayers = function setPlayers(p1, p2){
-   players[1] = p1;
-   players[2] = p2;
+   players[1].name = p1.name;
+   players[1].nick = p1.nick;
+   players[2].name = p2.name;
+   players[2].nick = p2.nick;
    document.getElementById('matchup').innerHTML = p1.name + " vs. " + p2.name;
 }
 
 var mark = function mark(row,col){
    if(gameStatus.isGameOver) return;
-   if(board[row][col] != 0)
-      return;
+   if(board[row][col] != 0) return;
    board[row][col] = gameStatus.nextPlayer;
    var nextStatus = getGameStatus();
    if(nextStatus.isWinner || nextStatus.isStalemate){
@@ -80,10 +83,11 @@ var foldStatus = function foldStatus(nextStatus, lastStatus){
 }
 
 var getOtherPlayer = function getOtherPlayer(lastPlayer){
-   if(lastPlayer == 1)
+   if(lastPlayer == 1){
       return 2;
-   else
+   } else {
       return 1;
+   }
 }
 
 var setWinner = function setWinner(playerNumber, playerName){
@@ -219,15 +223,16 @@ var initBoard = function(){
       drawCrossHatch();
       var row = function(x, y, height, width){
          return [
-            new Rect(x + 0 * third, y, third, third),
-            new Rect(x + 1 * third, y, third, third),
-            new Rect(x + 2 * third, y, third, third)]
+            new Cell(x + 0 * third, y, third, third),
+            new Cell(x + 1 * third, y, third, third),
+            new Cell(x + 2 * third, y, third, third)]
       };
 
       this.graphics = grid;
       this.thickness = thickness;
       this.width = width;
       this.height = width;
+      this.third = third;
       this.cells = [
             row(0, 0 * third, third, third),
             row(0, 1 * third, third, third),
@@ -245,6 +250,23 @@ var initBoard = function(){
       col = Math.floor(col);
       return col;
    };
+   Grid.prototype.setCellImage = function(row, col, file){
+      if(row < 0 || col < 0 || row > 2 || col > 2) return -1;
+      var cell = this.cells[row][col];
+      if(cell.file === file) return;
+      if(cell.sprite){
+         this.graphics.removeChild(cell.sprite);
+         cell.sprite = null;
+      }
+      if(file == null) return;
+      var sprite = loadSprite(file);
+      sprite.width = Math.min(this.third, sprite.width);
+      sprite.height = Math.min(this.third, sprite.height);
+      sprite.position.x = cell.center().x - sprite.width / 2;
+      sprite.position.y = cell.center().y - sprite.height / 2;
+      cell.sprite = sprite;
+      this.graphics.addChild(sprite);
+   };
 
    var padding = 40;
    var gridX = 130;
@@ -259,8 +281,11 @@ var initBoard = function(){
    var grid = new Grid(gridX, gridY, gridWidth);
    gridGraphic = grid.graphics;
 
-   var backgroundUrl = window.location.toString().match(/^https?:\/\/[^\/]+/) + '/tictactoe/images/background_tree.png';
-   stage.addChild(new PIXI.Sprite.fromImage(backgroundUrl));
+   var loadSprite = function(file){
+      var url = window.location.toString().match(/^https?:\/\/[^\/]+/) + '/tictactoe/images/' + file;
+      return new PIXI.Sprite.fromImage(url);
+   };
+   stage.addChild(loadSprite('background_tree.png'));
    stage.addChild(gridGraphic);
 
    var marks = new PIXI.Graphics();
@@ -269,16 +294,28 @@ var initBoard = function(){
    gridGraphic.addChild(marks);
 
 
-   var createPlayerLabel = function(playerName){
-      var label = new PIXI.Text(playerName);
-      label.position.x = 20;
-      label.position.y = grid.height + 20;
+   var createPlayerLabel = function(player){
+      console.log(player.color);
+      var label = new PIXI.Text(player.name, {stroke:player.color, strokeThickness:5, font:'bold 24pt Arial'});
+      label.position.x = 100;
+      label.position.y = - 90 + padding / 2;
       return label;
    };
 
+   var createPlayerMoniker = function(playerNumber){
+      var moniker = loadSprite(monikerFiles[playerNumber]);
+      moniker.position.x = 0;
+      moniker.position.y = - 90;
+      return moniker;
+   };
+
    playerLabels = []
-   playerLabels[1] = createPlayerLabel(players[1].name)
-   playerLabels[2] = createPlayerLabel(players[2].name)
+   playerLabels[1] = createPlayerLabel(players[1])
+   playerLabels[2] = createPlayerLabel(players[2])
+
+   playerMonikers = []
+   playerMonikers[1] = createPlayerMoniker(1)
+   playerMonikers[2] = createPlayerMoniker(2)
 
    var count = 0;
    
@@ -294,17 +331,21 @@ var initBoard = function(){
       mark(row,col);
    }
 
-   requestAnimFrame(animate);
+   var doAnimation = function (){
+      requestAnimFrame(animate);
+   };
+   doAnimation();
 
    function animate() {
       gameStatus = foldStatus(gameStatus, gameStatus);
       marks.clear();
       var isWinningPlay = function (row, col){
-         if(gameStatus.winningMoves)
+         if(gameStatus.winningMoves){
             for (var i = gameStatus.winningMoves.length - 1; i >= 0; i--) {
                var move = gameStatus.winningMoves[i];
                if(row == move[0] && col == move[1]) return true;
             };
+         }
          return false;
       };
       var stagePoint = stage.getMousePosition();
@@ -319,75 +360,38 @@ var initBoard = function(){
          for (var c = row.length - 1; c >= 0; c--) {
             var cell = grid.cells[r][c];
             var isCellHovered = hoveredCell.row == r && hoveredCell.col == c;
-            var shouldGlow = isWinningPlay(r,c) || isCellHovered;
+            var winningPlay = isWinningPlay(r,c);
+            var shouldGlow = winningPlay || isCellHovered;
             var playerNumber = row[c];
-            if(playerNumber == 0 && isCellHovered)
-               playerNumber = gameStatus.nextPlayer;
-            drawPlayerMoniker(playerNumber, cell.x, cell.y, cell.width, cell.height, shouldGlow);
-            //drawCellOutline(r, c);
+            if(playerNumber == 0 && isCellHovered) playerNumber = gameStatus.nextPlayer;
+            grid.setCellImage(r, c, (winningPlay ? monikerWinnerFiles : monikerFiles)[playerNumber]);
          };
       };
 
       // player to move
       if(gameStatus.isWinner){
-         drawWinningLine(gameStatus.winningPlayerNumber, gameStatus.winningMoves);
-         setCurrentPlayerLabel(gameStatus.winningPlayerNumber);
+         setCurrentPlayerSprite(gameStatus.winningPlayerNumber, playerMonikers);
+         setCurrentPlayerSprite(gameStatus.winningPlayerNumber, playerLabels);
       };
 
       // player to move
       if(!gameStatus.isGameOver){
-         drawPlayerMoniker(gameStatus.nextPlayer,
-            0, grid.height + padding + padding, 100, 100,
-            true);
-         setCurrentPlayerLabel(gameStatus.nextPlayer);
+         setCurrentPlayerSprite(gameStatus.nextPlayer, playerMonikers);
+         setCurrentPlayerSprite(gameStatus.nextPlayer, playerLabels);
       };
 
       renderer.render(stage);
-      requestAnimFrame(animate);
+      doAnimation();
+      // setTimeout(100, doAnimation);
    }
 
-   var setCurrentPlayerLabel = function (playerNumber){
+   var setCurrentPlayerSprite = function (playerNumber, sprites){
       var onPlayer = playerNumber;
       var offPlayer = getOtherPlayer(playerNumber);
-      var onLabel = playerLabels[onPlayer];
-      var offLabel = playerLabels[offPlayer];
+      var onLabel = sprites[onPlayer];
+      var offLabel = sprites[offPlayer];
       if(onLabel && onLabel.parent) gridGraphic.removeChild(onLabel);
       if(offLabel && offLabel.parent) gridGraphic.removeChild(offLabel);
       if(onLabel) gridGraphic.addChild(onLabel);
    };
-
-   var playerColor = [0xffffff, 0xFF5555, 0x00FF00]
-
-   var drawPlayerMoniker = function drawPlayerMoniker (player, x, y, width, height, isGlowing) {
-      if(player <= 0)return;
-      var fillOpacity = 0.5;
-      if(isGlowing) fillOpacity += .1 * Math.sin(gameStatus.tick / 10);
-      marks.beginFill(playerColor[player], fillOpacity);
-      var radius = Math.max(width, height) * .333;
-      marks.drawCircle(x + width / 2, y + height / 2, radius);
-      marks.lineStyle(5, playerColor[player], 1);
-      marks.drawCircle(x + width / 2, y + height / 2, radius);
-      marks.drawCircle(x + width / 2, y + height / 2, radius * .6666);
-   }
-
-   var drawCellOutline = function drawCellOutline (row, col) {
-      var cell = grid.cells[row][col];
-      marks.lineStyle(1, 0x000000, 1);
-      marks.moveTo(cell.x, cell.y);
-      marks.lineTo(cell.x + cell.width, cell.y);
-      marks.lineTo(cell.x + cell.width, cell.y + cell.height);
-      marks.lineTo(cell.x, cell.y + cell.height);
-      marks.lineTo(cell.x, cell.y);
-   }
-
-   var drawWinningLine = function drawWinningLine (player, moves) {
-      var getCell = function(move){
-         return grid.cells[move[0]][move[1]];
-      };
-      var cell1 = getCell(moves[0]);
-      var cell3 = getCell(moves[2]);
-      marks.lineStyle(10, playerColor[player], 1);
-      marks.moveTo(cell1.center().x, cell1.center().y);
-      marks.lineTo(cell3.center().x, cell3.center().y);
-   }
 };
