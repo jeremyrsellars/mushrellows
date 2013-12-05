@@ -205,16 +205,16 @@ var initBoard = function(){
          grid.lineStyle(thickness, lineColor, lineOpacity);
          
          var verticalLine = function(x, y, height){
-            grid.moveTo(x, y);
-            grid.lineTo(x, y + height);
+            grid.moveTo(x, y + thickness / 2);
+            grid.lineTo(x, y + height - thickness / 2);
             grid.endFill();
          }
          verticalLine(1 * third, 0, width);
          verticalLine(2 * third, 0, width);
 
          var horizontalLine = function(x, y, width){
-            grid.moveTo(x, y);
-            grid.lineTo(x + width, y);
+            grid.moveTo(x + thickness / 2, y);
+            grid.lineTo(x + width - thickness / 2, y);
             grid.endFill();
          }
          horizontalLine(0, 1 * third + 0, width);
