@@ -253,10 +253,11 @@ var initBoard = function(){
    Grid.prototype.setCellImage = function(row, col, file){
       if(row < 0 || col < 0 || row > 2 || col > 2) return -1;
       var cell = this.cells[row][col];
-      if(cell.file === file) return;
+      if(cell.file == file) return;
       if(cell.sprite){
          this.graphics.removeChild(cell.sprite);
          cell.sprite = null;
+         cell.file = null;
       }
       if(file == null) return;
       var sprite = loadSprite(file);
@@ -265,7 +266,19 @@ var initBoard = function(){
       sprite.position.x = cell.center().x - sprite.width / 2;
       sprite.position.y = cell.center().y - sprite.height / 2;
       cell.sprite = sprite;
+      cell.file = file;
+      cell.startTick = gameStatus.tick;
       this.graphics.addChild(sprite);
+   };
+   Grid.prototype.setTick = function(tick){
+      for(var r = 0; r < 3; r++){
+         for(var c = 0; c < 3; c++){
+            var cell = this.cells[r][c];
+            if(cell.sprite){
+               cell.sprite.alpha = .75 + .25 * Math.cos((tick - cell.startTick) / 20);
+            }
+         }
+      }
    };
 
    var padding = 40;
@@ -295,7 +308,6 @@ var initBoard = function(){
 
 
    var createPlayerLabel = function(player){
-      console.log(player.color);
       var label = new PIXI.Text(player.name, {stroke:player.color, strokeThickness:5, font:'bold 24pt Arial'});
       label.position.x = 100;
       label.position.y = - 90 + padding / 2;
@@ -380,9 +392,10 @@ var initBoard = function(){
          setCurrentPlayerSprite(gameStatus.nextPlayer, playerLabels);
       };
 
+      grid.setTick(gameStatus.tick);
+
       renderer.render(stage);
       doAnimation();
-      // setTimeout(100, doAnimation);
    }
 
    var setCurrentPlayerSprite = function (playerNumber, sprites){
