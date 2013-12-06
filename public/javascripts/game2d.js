@@ -31,6 +31,7 @@ Cell = (function() {
     this.y = y;
     this.width = width;
     this.height = height;
+    this.sprite = null;
   }
 
   Cell.prototype.center = function() {
@@ -51,6 +52,7 @@ var players = [
 ];
 var monikerFiles = [null,'star_y.png','star_w.png'];
 var monikerWinnerFiles = [null,'star_y_win.png','star_w_win.png'];
+var textures = {};
 
 var setPlayers = function setPlayers(p1, p2){
    players[1].name = p1.name;
@@ -253,11 +255,15 @@ var initBoard = function(){
    Grid.prototype.setCellImage = function(row, col, file){
       if(row < 0 || col < 0 || row > 2 || col > 2) return -1;
       var cell = this.cells[row][col];
-      if(cell.file == file) return;
       if(cell.sprite){
-         this.graphics.removeChild(cell.sprite);
-         cell.sprite = null;
-         cell.file = null;
+         if(file == null) {
+            this.graphics.removeChild(cell.sprite);
+            cell.sprite = null;
+         } else {
+            cell.sprite.setTexture(loadTexture(file));
+         }
+         cell.file = file;
+         return;
       }
       if(file == null) return;
       var sprite = loadSprite(file);
@@ -295,8 +301,15 @@ var initBoard = function(){
    gridGraphic = grid.graphics;
 
    var loadSprite = function(file){
+      return new PIXI.Sprite(loadTexture(file));
+   };
+
+   var loadTexture = function(file){
+      if(textures[file]) return textures[file];
       var url = window.location.toString().match(/^https?:\/\/[^\/]+/) + '/tictactoe/images/' + file;
-      return new PIXI.Sprite.fromImage(url);
+      var texture = new PIXI.Texture.fromImage(url);
+      textures[file] = texture;
+      return texture;
    };
    stage.addChild(loadSprite('background_tree.png'));
    stage.addChild(gridGraphic);
